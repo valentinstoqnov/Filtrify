@@ -5,5 +5,13 @@
         android:title="@string/new_image"
         android:id="@+id/action_new_image"
         android:icon="@drawable/ic_add"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
+    <item
+        android:title="@string/save"
+        android:id="@+id/action_save"
+        app:showAsAction="never" />
+    <item
+        android:title="@string/clear"
+        android:id="@+id/action_clear"
+        app:showAsAction="never" />
 </menu>

@@ -6,6 +6,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -15,19 +21,23 @@ import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.github.pwittchen.swipe.library.Swipe;
-import com.github.pwittchen.swipe.library.SwipeListener;
+import com.oswaldogh89.library.LatestImages;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -45,22 +55,24 @@ import jp.co.cyberagent.android.gpuimage.GPUImageColorInvertFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageColorMatrixFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageContrastFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageEmbossFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageGaussianBlurFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageGrayscaleFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageHighlightShadowFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageKuwaharaFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImagePixelationFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImagePosterizeFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageView;
 import shefa.valio.filtrify.R;
 
 public class HomeActivity extends AppCompatActivity implements GestureDetector.OnGestureListener {
 
     private static final int REQUEST_IMAGE_CAPTURE = 111;
 
+    @BindView(R.id.latest_images) LatestImages latestImages;
     @BindView(R.id.tab_layout) TabLayout tabLayout;
+    @BindView(R.id.gpu_image_view) GPUImageView gpuImage;
+
     private BottomSheetBehavior bottomSheetBehavior;
-    private GPUImage gpuImage;
     private GestureDetector gestureDetector;
 
     @Override
@@ -69,8 +81,9 @@ public class HomeActivity extends AppCompatActivity implements GestureDetector.O
         setContentView(R.layout.activity_main);
         Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
         setSupportActionBar(toolbar);
+        setTitle("Filtrify");
 
-        LinearLayout bottomSheetLayout = ButterKnife.findById(this, R.id.bottom_sheet_image_options);
+        final LinearLayout bottomSheetLayout = ButterKnife.findById(this, R.id.bottom_sheet_image_options);
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
 
         ButterKnife.bind(this);
@@ -89,13 +102,9 @@ public class HomeActivity extends AppCompatActivity implements GestureDetector.O
         tabLayout.addTab(tabLayout.newTab().setText("Highlight"));
         tabLayout.addTab(tabLayout.newTab().setText("Painting"));
 
-        gpuImage = new GPUImage(this);
-
-        GLSurfaceView surface = (GLSurfaceView) findViewById(R.id.surface_view);
-        gpuImage.setGLSurfaceView(surface);
         gestureDetector = new GestureDetector(this, this);
 
-        surface.setOnTouchListener(new View.OnTouchListener() {
+        gpuImage.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 gestureDetector.onTouchEvent(event);
@@ -156,23 +165,99 @@ public class HomeActivity extends AppCompatActivity implements GestureDetector.O
 
             }
         });
+
+        latestImages.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                showMessage("touch");
+                ArrayList<com.oswaldogh89.library.Image> selectedImages = latestImages.getSelectedImages();
+                if (selectedImages.size() > 0) {
+                    com.oswaldogh89.library.Image image = selectedImages.get(0);
+                    gpuImage.setImage(image.getImgPath());
+                    image.setSelected(false);
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                }
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Exit");
+        builder.setMessage("Are you sure you want to leave the app ?");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        builder.setNegativeButton("No", null);
+        builder.create().show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_new, menu);
+
+        MenuItem item = menu.findItem(R.id.action_save);
+        SpannableStringBuilder builder = new SpannableStringBuilder("* Save");
+        builder.setSpan(new ImageSpan(this, R.drawable.ic_save), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item.setTitle(builder);
+
+        MenuItem item1 = menu.findItem(R.id.action_new_image);
+        SpannableStringBuilder builder1 = new SpannableStringBuilder("* New image");
+        builder1.setSpan(new ImageSpan(this, R.drawable.ic_image_black), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item1.setTitle(builder1);
+
+        MenuItem item2 = menu.findItem(R.id.action_clear);
+        SpannableStringBuilder builder2 = new SpannableStringBuilder("* Clear");
+        builder2.setSpan(new ImageSpan(this, R.drawable.ic_clear_black), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item2.setTitle(builder2);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_new_image) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.action_new_image) {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }else {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
             return true;
+        }else if (itemId == R.id.action_save) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Save image");
+            builder.setMessage("Name the image");
+            final EditText editText = new EditText(this);
+            builder.setView(editText);
+            builder.setCancelable(false);
+            builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String fileName = editText.getText().toString();
+                    if (fileName.isEmpty()) {
+                        showMessage("Image name not filled in...");
+                    }else {
+                        gpuImage.saveToPictures("Filtrify", fileName, new GPUImageView.OnPictureSavedListener() {
+                            @Override
+                            public void onPictureSaved(Uri uri) {
+                                showMessage("Image successfully saved!");
+                            }
+                        });
+                    }
+                }
+            });
+            builder.setNegativeButton("Cancel", null);
+            builder.create().show();
+        }else if (itemId == R.id.action_clear) {
+            gpuImage.removeAllViews();
+            //gpuImage.setImage(BitmapFactory.decodeResource(getResources(), android.R.color.transparent));
         }
         return super.onOptionsItemSelected(item);
     }

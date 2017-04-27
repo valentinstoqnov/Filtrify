@@ -9,10 +9,17 @@
     tools:showIn="@layout/activity_main">
 
     <android.opengl.GLSurfaceView
+        android:visibility="gone"
         android:id="@+id/surface_view"
         android:background="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <jp.co.cyberagent.android.gpuimage.GPUImageView
+        android:background="@android:color/transparent"
+        android:id="@+id/gpu_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <ImageView
         android:visibility="gone"
