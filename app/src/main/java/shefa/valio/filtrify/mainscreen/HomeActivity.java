@@ -32,12 +32,25 @@ import com.github.pwittchen.swipe.library.SwipeListener;
 import java.io.File;
 import java.util.ArrayList;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import in.myinnos.awesomeimagepicker.activities.AlbumSelectActivity;
 import in.myinnos.awesomeimagepicker.helpers.ConstantsCustomGallery;
 import in.myinnos.awesomeimagepicker.models.Image;
 import jp.co.cyberagent.android.gpuimage.GPUImage;
+import jp.co.cyberagent.android.gpuimage.GPUImageBoxBlurFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageColorBalanceFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageColorInvertFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageColorMatrixFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageContrastFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageEmbossFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageGaussianBlurFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageGrayscaleFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageHighlightShadowFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageKuwaharaFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImagePixelationFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImagePosterizeFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
 import shefa.valio.filtrify.R;
 
@@ -45,28 +58,36 @@ public class HomeActivity extends AppCompatActivity implements GestureDetector.O
 
     private static final int REQUEST_IMAGE_CAPTURE = 111;
 
-    private TabLayout tabLayout;
+    @BindView(R.id.tab_layout) TabLayout tabLayout;
     private BottomSheetBehavior bottomSheetBehavior;
     private GPUImage gpuImage;
     private GestureDetector gestureDetector;
-    private Swipe swipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
-        tabLayout = new TabLayout(this);
-        tabLayout.addTab(tabLayout.newTab().setText("Sepia"));
-        tabLayout.addTab(tabLayout.newTab().setText("Negative"));
-        tabLayout.addTab(tabLayout.newTab().setText("Dick"));
-        toolbar.addView(tabLayout);
         setSupportActionBar(toolbar);
 
         LinearLayout bottomSheetLayout = ButterKnife.findById(this, R.id.bottom_sheet_image_options);
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
 
         ButterKnife.bind(this);
+
+
+        tabLayout.addTab(tabLayout.newTab().setText("Sepia"));
+        tabLayout.addTab(tabLayout.newTab().setText("Negative"));
+        tabLayout.addTab(tabLayout.newTab().setText("Emboss"));
+        tabLayout.addTab(tabLayout.newTab().setText("Grayscale"));
+        tabLayout.addTab(tabLayout.newTab().setText("Contrast"));
+        tabLayout.addTab(tabLayout.newTab().setText("Posterize"));
+        tabLayout.addTab(tabLayout.newTab().setText("Pixelate"));
+        tabLayout.addTab(tabLayout.newTab().setText("Blur"));
+        tabLayout.addTab(tabLayout.newTab().setText("Color Balance"));
+        tabLayout.addTab(tabLayout.newTab().setText("Color Matrix"));
+        tabLayout.addTab(tabLayout.newTab().setText("Highlight"));
+        tabLayout.addTab(tabLayout.newTab().setText("Painting"));
 
         gpuImage = new GPUImage(this);
 
@@ -85,10 +106,43 @@ public class HomeActivity extends AppCompatActivity implements GestureDetector.O
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    gpuImage.setFilter(new GPUImageSepiaFilter());
-                }else {
-                    showMessage(tab.getText().toString());
+                switch (tab.getPosition()) {
+                    case 0:
+                        gpuImage.setFilter(new GPUImageSepiaFilter());
+                        break;
+                    case 1:
+                        gpuImage.setFilter(new GPUImageColorInvertFilter());
+                        break;
+                    case 2:
+                        gpuImage.setFilter(new GPUImageEmbossFilter());
+                        break;
+                    case 3:
+                        gpuImage.setFilter(new GPUImageGrayscaleFilter());
+                        break;
+                    case 4:
+                        gpuImage.setFilter(new GPUImageContrastFilter());
+                        break;
+                    case 5:
+                        gpuImage.setFilter(new GPUImagePosterizeFilter());
+                        break;
+                    case 6:
+                        gpuImage.setFilter(new GPUImagePixelationFilter());
+                        break;
+                    case 7:
+                        gpuImage.setFilter(new GPUImageBoxBlurFilter());
+                        break;
+                    case 8:
+                        gpuImage.setFilter(new GPUImageColorBalanceFilter());
+                        break;
+                    case 9:
+                        gpuImage.setFilter(new GPUImageColorMatrixFilter());
+                        break;
+                    case 10:
+                        gpuImage.setFilter(new GPUImageHighlightShadowFilter());
+                        break;
+                    case 11:
+                        gpuImage.setFilter(new GPUImageKuwaharaFilter());
+                        break;
                 }
             }
 
