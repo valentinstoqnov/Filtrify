@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -18,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -28,6 +30,10 @@ import android.widget.Toast;
 import com.oswaldogh89.library.LatestImages;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+import com.zomato.photofilters.imageprocessors.Filter;
+import com.zomato.photofilters.imageprocessors.subfilters.BrightnessSubfilter;
+import com.zomato.photofilters.imageprocessors.subfilters.ColorOverlaySubfilter;
+import com.zomato.photofilters.imageprocessors.subfilters.ContrastSubfilter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,17 +44,24 @@ import butterknife.OnClick;
 import in.myinnos.awesomeimagepicker.activities.AlbumSelectActivity;
 import in.myinnos.awesomeimagepicker.helpers.ConstantsCustomGallery;
 import in.myinnos.awesomeimagepicker.models.Image;
+import jp.co.cyberagent.android.gpuimage.GPUImage;
+import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
 import shefa.valio.filtrify.R;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE_CAPTURE = 12312;
 
+    static
+    {
+        System.loadLibrary("NativeImageProcessor");
+    }
+
     @BindView(R.id.latest_images) protected LatestImages latestImages;
     @BindView(R.id.img_view_main) protected ImageView imageView;
 
     private BottomSheetBehavior bottomSheetBehavior;
-
+    private GPUImage gpuImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +74,31 @@ public class MainActivity extends AppCompatActivity {
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
 
         ButterKnife.bind(this);
+        imageView.buildDrawingCache(true);
+
+        gpuImage = new GPUImage(this);
+        GLSurfaceView surface = (GLSurfaceView) findViewById(R.id.surface_view);
+        surface.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                gpuImage.setFilter(new GPUImageSepiaFilter());
+                return true;
+            }
+        });
+        gpuImage.setGLSurfaceView(surface);
+
+
+        imageView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+               /* Filter myFilter = new Filter();
+                imageView.buildDrawingCache();
+                myFilter.addSubFilter(new ColorOverlaySubfilter(100, .2f, .2f, .0f));
+                Bitmap outputImage = myFilter.processFilter(imageView.getDrawingCache());
+                imageView.setImageBitmap(outputImage);*/
+                return true;
+            }
+        });
 
     }
 
@@ -76,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }else {
+                showMessage("bottom shit");
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
             return true;
@@ -90,12 +129,13 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == ConstantsCustomGallery.REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
             ArrayList<Image> images = data.getParcelableArrayListExtra(ConstantsCustomGallery.INTENT_EXTRA_IMAGES);
             Uri uri = Uri.fromFile(new File(images.get(0).path));
-            imageView.setImageURI(uri);
+            //imageView.setImageURI(uri);
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            gpuImage.setImage(uri);
         }else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-            imageView.setImageBitmap(imageBitmap);
+            //imageView.setImageBitmap(imageBitmap);
         }
     }
 

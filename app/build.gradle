@@ -38,6 +38,8 @@ dependencies {
     compile 'com.github.zomato:androidphotofilters:1.0.1'
     compile 'com.github.myinnos:AwesomeImagePicker:1.0.1'
     compile 'com.github.oswaldo89:LatestPhotoGallery:1.0.1'
+    compile 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.4.1'
+    compile 'com.github.pwittchen:swipe:0.0.1'
 
     testCompile 'junit:junit:4.12'
 }
