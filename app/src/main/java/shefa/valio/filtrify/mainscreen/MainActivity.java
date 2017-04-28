@@ -1,264 +1,135 @@
 package shefa.valio.filtrify.mainscreen;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.os.PersistableBundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.oswaldogh89.library.LatestImages;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
-import com.zomato.photofilters.imageprocessors.Filter;
-import com.zomato.photofilters.imageprocessors.subfilters.BrightnessSubfilter;
-import com.zomato.photofilters.imageprocessors.subfilters.ColorOverlaySubfilter;
-import com.zomato.photofilters.imageprocessors.subfilters.ContrastSubfilter;
-
-import java.io.File;
-import java.util.ArrayList;
+import android.widget.ProgressBar;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
-import in.myinnos.awesomeimagepicker.activities.AlbumSelectActivity;
-import in.myinnos.awesomeimagepicker.helpers.ConstantsCustomGallery;
-import in.myinnos.awesomeimagepicker.models.Image;
-import jp.co.cyberagent.android.gpuimage.GPUImage;
-import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageView;
 import shefa.valio.filtrify.R;
+import shefa.valio.filtrify.fragments.AboutFragment;
+import shefa.valio.filtrify.fragments.AddImageFragment;
+import shefa.valio.filtrify.fragments.GPUImageFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_IMAGE_CAPTURE = 12312;
-
-    static
-    {
-        System.loadLibrary("NativeImageProcessor");
-    }
-
-    @BindView(R.id.latest_images) protected LatestImages latestImages;
-    @BindView(R.id.img_view_main) protected ImageView imageView;
-
-    private BottomSheetBehavior bottomSheetBehavior;
-    private GPUImage gpuImage;
+    @BindView(R.id.progress_bar) ProgressBar progressBar;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        LinearLayout bottomSheetLayout = ButterKnife.findById(this, R.id.bottom_sheet_image_options);
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
-
         ButterKnife.bind(this);
-        imageView.buildDrawingCache(true);
+    }
 
-        gpuImage = new GPUImage(this);
-        GLSurfaceView surface = (GLSurfaceView) findViewById(R.id.surface_view);
-        surface.setOnLongClickListener(new View.OnLongClickListener() {
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Exit");
+        builder.setMessage("Are you sure you want to leave the app ?");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
-            public boolean onLongClick(View v) {
-                gpuImage.setFilter(new GPUImageSepiaFilter());
-                return true;
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
             }
         });
-        gpuImage.setGLSurfaceView(surface);
-
-
-        imageView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-               /* Filter myFilter = new Filter();
-                imageView.buildDrawingCache();
-                myFilter.addSubFilter(new ColorOverlaySubfilter(100, .2f, .2f, .0f));
-                Bitmap outputImage = myFilter.processFilter(imageView.getDrawingCache());
-                imageView.setImageBitmap(outputImage);*/
-                return true;
-            }
-        });
-
+        builder.setNegativeButton("No", null);
+        builder.create().show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_new, menu);
+
+        MenuItem item = menu.findItem(R.id.action_save);
+        SpannableStringBuilder builder = new SpannableStringBuilder("* Save");
+        builder.setSpan(new ImageSpan(this, R.drawable.ic_save), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item.setTitle(builder);
+
+        MenuItem item2 = menu.findItem(R.id.action_clear);
+        SpannableStringBuilder builder2 = new SpannableStringBuilder("* Clear");
+        builder2.setSpan(new ImageSpan(this, R.drawable.ic_clear_black), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item2.setTitle(builder2);
+
+        MenuItem item3 = menu.findItem(R.id.action_about);
+        SpannableStringBuilder builder3 = new SpannableStringBuilder("* About");
+        builder3.setSpan(new ImageSpan(this, R.drawable.ic_info_outline), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        item3.setTitle(builder3);
+
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_new_image) {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            }else {
-                showMessage("bottom shit");
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.action_save) {
+         /*   AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Save image");
+            builder.setMessage("Name the image");
+            final EditText editText = new EditText(this);
+            builder.setView(editText);
+            builder.setCancelable(false);
+            builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String fileName = editText.getText().toString();
+                    if (fileName.isEmpty()) {
+                        showMessage("Image name not filled in...");
+                    }else {
+                        gpuImage.saveToPictures("Filtrify", fileName, new GPUImageView.OnPictureSavedListener() {
+                            @Override
+                            public void onPictureSaved(Uri uri) {
+                                showMessage("Image successfully saved!");
+                            }
+                        });
+                    }
+                }
+            });
+            builder.setNegativeButton("Cancel", null);
+            builder.create().show();*/
+        }else if (itemId == R.id.action_clear) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            GPUImageFragment gpuImageFragment = (GPUImageFragment) fragmentManager.findFragmentByTag(GPUImageFragment.TAG);
+            if (gpuImageFragment != null) {
+                fragmentManager.beginTransaction()
+                        .remove(gpuImageFragment)
+                        .add(new AddImageFragment(), AddImageFragment.TAG)
+                        .commit();
             }
-            return true;
+        }else if (itemId == R.id.action_about) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            AboutFragment aboutFragment = (AboutFragment) fragmentManager.findFragmentByTag(AboutFragment.TAG);
+
+            if (aboutFragment == null) {
+                fragmentManager.beginTransaction()
+                        .add(new AboutFragment(), AboutFragment.TAG)
+                        .commit();
+            }else {
+                fragmentManager.beginTransaction()
+                        .show(aboutFragment)
+                        .commit();
+            }
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == ConstantsCustomGallery.REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
-            ArrayList<Image> images = data.getParcelableArrayListExtra(ConstantsCustomGallery.INTENT_EXTRA_IMAGES);
-            Uri uri = Uri.fromFile(new File(images.get(0).path));
-            //imageView.setImageURI(uri);
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            gpuImage.setImage(uri);
-        }else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            //imageView.setImageBitmap(imageBitmap);
-        }
-    }
-
-    @OnClick(R.id.tv_bottom_sheet_peek)
-    public void onBottomSheetPeekClick() {
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-    }
-
-    @OnClick(R.id.btn_bottom_sheet_camera)
-    public void onCameraClick() {
-        takeAPicture();
-    }
-
-    @OnClick(R.id.btn_bottom_sheet_image_link)
-    public void onImageLinkClick() {
-        showLinkDialog();
-    }
-
-    @OnClick(R.id.btn_bottom_sheet_images)
-    public void onImagePickerClick() {
-        showImagePicker();
-    }
-
-    public void showMessage(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    private void showImagePicker() {
-        Intent intent = new Intent(this, AlbumSelectActivity.class);
-        intent.putExtra(ConstantsCustomGallery.INTENT_EXTRA_LIMIT, 1);
-        startActivityForResult(intent, ConstantsCustomGallery.REQUEST_CODE);
-    }
-
-    private void takeAPicture() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.CAMERA)) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Function requires camera")
-                        .setMessage("The camera is needed so that you are able to take a picture")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ActivityCompat.requestPermissions(MainActivity.this,
-                                        new String[]{Manifest.permission.READ_CONTACTS},
-                                        REQUEST_IMAGE_CAPTURE);
-                            }
-                        }).setCancelable(true);
-                builder.create().show();
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_CONTACTS},
-                        REQUEST_IMAGE_CAPTURE);
-            }
-        }else {
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-            } else {
-                showMessage("No camera available");
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        switch (requestCode) {
-            case REQUEST_IMAGE_CAPTURE: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                    } else {
-                        showMessage("No camera available");
-                    }
-                } else {
-                    showMessage("Can't use this option");
-                }
-                break;
-            }
-        }
-    }
-
-    private void showLinkDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Enter the link to the image");
-        final EditText editText = new EditText(this);
-        builder.setView(editText);
-        builder.setCancelable(true);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String url = editText.getText().toString();
-                if (!url.isEmpty()) {
-                    Picasso.with(MainActivity.this)
-                            .load(url)
-                            .into(imageView, new Callback() {
-                                @Override
-                                public void onSuccess() {
-
-                                }
-
-                                @Override
-                                public void onError() {
-                                    showMessage("Couldn't get the image");
-                                }
-                            });
-                }else {
-                    showMessage("Empty link entered");
-                }
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            }
-        });
-        builder.create().show();
     }
 }
