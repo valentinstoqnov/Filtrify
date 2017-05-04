@@ -3,6 +3,7 @@
     package="shefa.valio.filtrify">
 
     <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
@@ -13,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".mainscreen.HomeActivity"
+            android:name=".mainscreen.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

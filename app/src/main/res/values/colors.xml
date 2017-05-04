@@ -3,4 +3,11 @@
     <color name="colorPrimary">#FFC107</color>
     <color name="colorPrimaryDark">#FFA000</color>
     <color name="colorAccent">#673AB7</color>
+
+
+    <color name="deep_orange">#FF5722</color>
+    <color name="red">#F44336</color>
+    <color name="green">#8BC34A</color>
+
+    <color name="colorDivider">#BDBDBD</color>
 </resources>

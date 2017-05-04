@@ -31,10 +31,11 @@
             android:id="@+id/progress_bar"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
-            android:layout_height="1dp" />
+            android:layout_height="5dp" />
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_main" />
 
-    <include layout="@layout/bottom_sheet_image_options" />
+    <include layout="@layout/bottom_sheet_new_image" />
+
 </android.support.design.widget.CoordinatorLayout>
